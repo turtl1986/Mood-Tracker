@@ -1,31 +1,61 @@
 import {useEffect, useState} from "react";
 
+export interface MoodData {
+    emotionValue: string;
+    textMessage: string;
+    timeValue: string;
+}
+
 function Tracker() {
 
     const [emotion, setEmotion] = useState("")
     const [text, setText] = useState("")
-    const time = `${new Date().getDate()}.${new Date().getMonth() + 1}`
+    const [time, setTime] = useState("")
+    const [data, setData] = useState<MoodData[]>([])
+
 
     useEffect(() => {
-        const objectEmotion = JSON.parse(`${localStorage.getItem(time + `.${new Date().getFullYear()}`)}`)
-        setEmotion(objectEmotion.emotionValue)
-        setText(objectEmotion.textMessage)
+        const parsedData: MoodData[] = JSON.parse(`${localStorage.getItem('moodData')}`);
+        setData(parsedData)
+        const mood = parsedData.filter(i => i.timeValue === `${new Date().getDate()}.${new Date().getMonth() + 1}.${new Date().getFullYear()}`)
+        if (mood.length) {
+            setEmotion(mood[0]?.emotionValue)
+            setText(mood[0]?.textMessage)
+            setTime(mood[0]?.timeValue)
+        }
     }, [time]);
 
     const handleChange = () => {
+        if (!emotion.trim() || !text) {
+            alert("Пожалуйста, выберите эмоцию и сделайте запись");
+            return;
+        }
 
-        const moodData = {
+        const currentDate = time || `${new Date().getDate()}.${new Date().getMonth() + 1}.${new Date().getFullYear()}`;
+
+        const newEntry = {
             emotionValue: emotion,
             textMessage: text,
+            timeValue: currentDate,
         };
-        localStorage.setItem(time + `.${new Date().getFullYear()}`, JSON.stringify(moodData));
+
+        let newData: MoodData[];
+
+        const existingEntryIndex = data.findIndex(item => item.timeValue === currentDate);
+
+        if (existingEntryIndex !== -1) {
+            newData = [...data];
+            newData[existingEntryIndex] = newEntry;
+        } else {
+            newData = [...data, newEntry];
+        }
+
+        setData(newData);
+        localStorage.setItem('moodData', JSON.stringify(newData));
     }
 
     return (
         <>
-            <h1>Поймай Волну Эмоций</h1>
-            <p>Забудь о серых буднях! Наше приложение поможет тебе отслеживать свои чувства и видеть, как меняется твой
-                внутренний мир. Это проще, чем утренний кофе!</p>
             <div className="card">
                 <p>{time}</p>
                 <p className={`${emotion.trim() === "" ? "hide" : "show"}`}>Выбранная эмоция: {emotion}</p>
