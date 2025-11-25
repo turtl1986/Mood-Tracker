@@ -1,7 +1,7 @@
 import {Route, Routes} from 'react-router-dom'
-import Tracker from './pages/Tracker.tsx'
-import MainLayout from "./pages/MainLoyaut.tsx";
-import Calendar from "./pages/Calendar.tsx";
+import Tracker from './pages/tracker/Tracker.tsx'
+import MainLayout from "./pages/mainLayout/MainLoyaut.tsx";
+import Calendar from "./pages/calendar/Calendar.tsx";
 
 function App() {
 
