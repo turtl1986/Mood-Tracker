@@ -9,11 +9,11 @@ export interface MonthSeasonInfo {
 }
 
 export interface IGroupMood {
-    veryBad: MoodData[];
-    bad: MoodData[];
-    normal: MoodData[];
-    good: MoodData[];
-    veryGood: MoodData[];
+    veryBad: IMoodData[];
+    bad: IMoodData[];
+    normal: IMoodData[];
+    good: IMoodData[];
+    veryGood: IMoodData[];
 }
 
 export interface ArrayMood {
@@ -22,8 +22,19 @@ export interface ArrayMood {
     color: string;
 }
 
-export interface MoodData {
+export interface IMoodData {
     emotionValue: string;
-    textMessage: string;
     timeValue: string;
+    reasonMessage: string;
+    energyValue: number;
+    activityMessage: string;
+    noteMessage: string;
+}
+
+export interface IFormState {
+    emotion: string;
+    reason: string;
+    note: string;
+    activity: string;
+    energy: number;
 }

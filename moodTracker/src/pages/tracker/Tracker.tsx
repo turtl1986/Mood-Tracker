@@ -1,144 +1,173 @@
-import {useEffect, useState} from "react";
-import type {MoodData} from "../../utils/interface.tsx";
+import React, {useEffect, useState} from "react";
+import type {IFormState, IMoodData} from "../../utils/interface.tsx";
 import style from './tracker.module.css'
+import {arrayMood} from "../../dataMood.tsx";
 
 function Tracker() {
-    const [emotion, setEmotion] = useState("")
-    const [text, setText] = useState("")
-    const [time, setTime] = useState("")
-    const [data, setData] = useState<MoodData[]>([])
+    const [formState, setFormState] = useState<IFormState>({
+        emotion: "",
+        reason: "",
+        note: "",
+        activity: "",
+        energy: 0
+    });
+
+    const [time, setTime] = useState("");
+    const [data, setData] = useState<IMoodData[]>([]);
+
+    const getNowTime = () => {
+        const now = new Date();
+        return `${now.getDate()}.${now.getMonth() + 1}.${now.getFullYear()}`;
+    }
+
+    const updateFormField = (fields: Partial<IFormState>) => {
+        setFormState(prev => ({...prev, ...fields}));
+    }
 
     useEffect(() => {
-        const parsedData: MoodData[] = JSON.parse(`${localStorage.getItem('moodData')}`);
-        if (parsedData) {
-            setData(parsedData)
-            const mood = parsedData.filter(i => i.timeValue === `${new Date().getDate()}.${new Date().getMonth() + 1}.${new Date().getFullYear()}`)
-            if (mood.length) {
-                setEmotion(mood[0]?.emotionValue)
-                setText(mood[0]?.textMessage)
-                setTime(mood[0]?.timeValue)
-            }
-        }
-    }, [time]);
+        const savedData = localStorage.getItem('moodData');
+        if (!savedData) return;
 
-    const handleChange = () => {
-        if (!emotion.trim() || !text) {
-            alert("Пожалуйста, выберите эмоцию и сделайте запись");
+            const parsedData: IMoodData[] = JSON.parse(savedData);
+            const today = getNowTime();
+            const todayMood = parsedData.find(item => item.timeValue === today);
+
+            if (todayMood) {
+                setData(parsedData);
+                setTime(todayMood.timeValue);
+
+                setFormState({
+                    emotion: todayMood.emotionValue || "",
+                    reason: todayMood.reasonMessage || "",
+                    note: todayMood.noteMessage || "",
+                    activity: todayMood.activityMessage || "",
+                    energy: todayMood.energyValue || 0,
+                });
+            }
+
+    }, []);
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        if (!formState.emotion.trim() || !formState.reason.trim() || !formState.activity.trim() || !formState.note.trim()) {
+            alert("Пожалуйста, заполните все поля");
             return;
         }
 
-        const currentDate = time || `${new Date().getDate()}.${new Date().getMonth() + 1}.${new Date().getFullYear()}`;
+        const currentDate = time || getNowTime();
 
-        const newEntry = {
-            emotionValue: emotion,
-            textMessage: text,
+        const newEntry: IMoodData = {
+            emotionValue: formState.emotion,
+            reasonMessage: formState.reason,
             timeValue: currentDate,
+            energyValue: formState.energy,
+            activityMessage: formState.activity,
+            noteMessage: formState.note,
         };
 
-        let newData: MoodData[];
+        const existingIndex = data.findIndex(item => item.timeValue === currentDate);
+        let newData: IMoodData[];
 
-        const existingEntryIndex = data.findIndex(item => item.timeValue === currentDate);
-
-        if (existingEntryIndex !== -1) {
+        if (existingIndex !== -1) {
             newData = [...data];
-            newData[existingEntryIndex] = newEntry;
+            newData[existingIndex] = newEntry;
         } else {
             newData = [...data, newEntry];
         }
 
         setData(newData);
         localStorage.setItem('moodData', JSON.stringify(newData));
-
-        // Оповещение об успехе
         alert("Настроение сохранено! 💫");
     }
 
-    return (
-        <div className={style.tracker}>
-            <div className={style.tracker__card}>
-                <p className={style.tracker__date}>{time || `${new Date().getDate()}.${new Date().getMonth() + 1}.${new Date().getFullYear()}`}</p>
+    const hasAnyInput = () => {
+        return formState.emotion.trim() !== "" || formState.reason.trim() !== "" ||
+            formState.activity.trim() !== "" ||
+            formState.note.trim() !== "" ||
+            formState.energy >= 0;
+    }
 
-                <p className={`${style.tracker__emotion} ${
-                    emotion.trim() === "" ? style.tracker__emotionHide : style.tracker__emotionShow
-                }`}>
-                    Выбранная эмоция: {emotion}
-                </p>
+    const isTodayEntryExists = () => {
+        return data.some(item => item.timeValue === (time || getNowTime()));
+    }
 
-                <div className={style.tracker__emotions}>
-                    <div
-                        onClick={() => setEmotion("Очень плохо")}
-                        className={`${style.tracker__emotionCard} ${
-                            emotion === "Очень плохо" ? style.tracker__emotionCardChose : ""
-                        }`}
-                        data-emotion="Очень плохо"
-                    >
-                        <span className={style.tracker__emoji}>😢</span>
-                        <p className={style.tracker__emotionText}>Очень плохо</p>
-                    </div>
+    const renderEnergyScale = () => (
+        <div className={style.tracker__energy_scale}>
+            <h3 className={style.tracker__emotions_label}>Уровень энергии</h3>
+            <p className={style.tracker__emotions_label}>Оценка своего уровня энергии от 0 до 10</p>
+            {Array.from({length: 11}, (_, index) => (
+                <div
+                    key={index}
+                    onClick={() => updateFormField({'energy': formState.energy === index + 1 ? index : index + 1})}
+                    className={`${style.energyPoint} ${
+                        index < formState.energy ? style.active : ""
+                    }`}
+                />
+            ))}
+        </div>
+    );
 
-                    <div
-                        onClick={() => setEmotion("Плохо")}
-                        className={`${style.tracker__emotionCard} ${
-                            emotion === "Плохо" ? style.tracker__emotionCardChose : ""
-                        }`}
-                        data-emotion="Плохо"
-                    >
-                        <span className={style.tracker__emoji}>😞</span>
-                        <p className={style.tracker__emotionText}>Плохо</p>
-                    </div>
-
-                    <div
-                        onClick={() => setEmotion("Нормально")}
-                        className={`${style.tracker__emotionCard} ${
-                            emotion === "Нормально" ? style.tracker__emotionCardChose : ""
-                        }`}
-                        data-emotion="Нормально"
-                    >
-                        <span className={style.tracker__emoji}>😐</span>
-                        <p className={style.tracker__emotionText}>Нормально</p>
-                    </div>
-
-                    <div
-                        onClick={() => setEmotion("Хорошо")}
-                        className={`${style.tracker__emotionCard} ${
-                            emotion === "Хорошо" ? style.tracker__emotionCardChose : ""
-                        }`}
-                        data-emotion="Хорошо"
-                    >
-                        <span className={style.tracker__emoji}>😊</span>
-                        <p className={style.tracker__emotionText}>Хорошо</p>
-                    </div>
-
-                    <div
-                        onClick={() => setEmotion("Отлично")}
-                        className={`${style.tracker__emotionCard} ${
-                            emotion === "Отлично" ? style.tracker__emotionCardChose : ""
-                        }`}
-                        data-emotion="Отлично"
-                    >
-                        <span className={style.tracker__emoji}>🤩</span>
-                        <p className={style.tracker__emotionText}>Отлично</p>
-                    </div>
+    const renderEmotionCards = () => (
+        <div className={style.tracker__emotions}>
+            {arrayMood.map((item) => (
+                <div key={item.name}
+                    onClick={() => updateFormField({'emotion': item.name})}
+                    className={`${style.tracker__emotionCard} ${
+                        formState.emotion === item.name ? style.tracker__emotionCardChose : ""
+                    }`}>
+                    <span className={style.tracker__emoji}>{item.emoji}</span>
+                    <p className={style.tracker__emotionText}>{item.name}</p>
                 </div>
-
-                <div className={style.tracker__inputGroup}>
-                    <input
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        type="text"
-                        placeholder="Что повлияло на ваше настроение?"
-                        className={style.tracker__input}
-                    />
-                    <button
-                        onClick={handleChange}
-                        className={style.tracker__button}
-                        disabled={!emotion.trim() || !text}>
-                        {!emotion.trim() || !text ? 'Запомнить настроение' : 'Редактировать настроение'}
-                    </button>
-                </div>
-            </div>
+            ))}
         </div>
     )
+
+    return (
+        <div className={style.tracker}>
+            <p className={style.tracker__date}>{time || getNowTime()}</p>
+
+            <h2 className={`${style.tracker__emotion} ${
+                !formState.emotion ? style.tracker__emotionHide : style.tracker__emotionShow
+            }`}>
+                Выбранная эмоция: {formState.emotion}
+            </h2>
+
+            <form className={style.tracker__card} onSubmit={handleSubmit}>
+                {renderEmotionCards()}
+
+                <input
+                    value={formState.reason}
+                    onChange={(e) => updateFormField({'reason': e.target.value})}
+                    type="text"
+                    placeholder="Что повлияло на ваше настроение?"
+                    className={style.tracker__input}
+                />
+
+                {renderEnergyScale()}
+
+                <input
+                    value={formState.activity}
+                    onChange={(e) => updateFormField({'activity': e.target.value})}
+                    type="text"
+                    placeholder="Чем вы занимались сегодня?"
+                    className={style.tracker__input}
+                />
+
+                <input
+                    value={formState.note}
+                    onChange={(e) => updateFormField({'note': e.target.value})}
+                    type="text"
+                    placeholder="Дополнительные заметки"
+                    className={style.tracker__input}
+                />
+
+                <button type="submit" className={style.tracker__button} disabled={!hasAnyInput()}>
+                    {isTodayEntryExists() ? 'Обновить запись' : 'Сохранить настроение'}
+                </button>
+            </form>
+        </div>
+    );
 }
 
-export default Tracker
+export default Tracker;

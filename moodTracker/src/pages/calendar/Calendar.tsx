@@ -1,16 +1,16 @@
 import {useEffect, useState} from "react";
-import type {ArrayMood, IGroupMood, MonthSeasonInfo, MoodData} from "../../utils/interface.tsx";
+import type {ArrayMood, IGroupMood, MonthSeasonInfo, IMoodData} from "../../utils/interface.tsx";
 import {arrayMood, initialGroupMood, monthsWithSeason} from "../../dataMood.tsx";
 import styles from './calendar.module.css';
 
 function Calendar() {
-    const [data, setData] = useState<MoodData[]>([]);
+    const [data, setData] = useState<IMoodData[]>([]);
     const [selectedMonth, setSelectedMonth] = useState<string>("");
     const [groupMood, setGroupMood] = useState<IGroupMood>(initialGroupMood);
 
     useEffect(() => {
         const raw = localStorage.getItem("moodData");
-        const parsedData: MoodData[] = raw ? JSON.parse(raw) : [];
+        const parsedData: IMoodData[] = raw ? JSON.parse(raw) : [];
         setData(parsedData);
 
         const now = new Date();
@@ -19,7 +19,7 @@ function Calendar() {
         updateMoodByMonth(currentMonthYear, parsedData);
     }, []);
 
-    const updateMoodByMonth = (monthYear: string, sourceData: MoodData[]) => {
+    const updateMoodByMonth = (monthYear: string, sourceData: IMoodData[]) => {
         const mood = sourceData.filter(i => {
             const monthYearFromItem = i.timeValue.split('.').slice(1).join('.');
             return monthYearFromItem === monthYear;
@@ -45,7 +45,7 @@ function Calendar() {
         setGroupMood(grouped);
     };
 
-    const createBlock = (array: MoodData[]) => {
+    const createBlock = (array: IMoodData[]) => {
         return (
             <div>
                 {array.map((item, index) => (

@@ -132,10 +132,6 @@
     line-height: 1.2;
 }
 
-.tracker__inputGroup {
-    margin-bottom: 1.5rem;
-}
-
 .tracker__input {
     width: 100%;
     background: rgba(255, 255, 255, 0.07);
@@ -228,4 +224,36 @@
 
 .tracker__emotionCard[data-emotion="Отлично"]:hover {
     border-color: rgba(168, 85, 247, 0.4);
+}
+
+.tracker__energy_scale {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1.5rem 0;
+    padding: 0 0.5rem;
+}
+
+.energyPoint {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.energyPoint:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.energyPoint.active {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8));
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.2);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }
